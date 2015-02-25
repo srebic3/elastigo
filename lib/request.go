@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"crypto/tls"
 )
 
 type Request struct {
@@ -59,8 +60,6 @@ func (r *Request) SetBody(body io.Reader) {
 			r.ContentLength = int64(v.Len())
 		case *bytes.Reader:
 			r.ContentLength = int64(v.Len())
-		case *bytes.Buffer:
-			r.ContentLength = int64(v.Len())
 		}
 	}
 }
@@ -74,6 +73,8 @@ func (r *Request) Do(v interface{}) (int, []byte, error) {
 }
 
 func (r *Request) DoResponse(v interface{}) (*http.Response, []byte, error) {
+	http.DefaultClient = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+
 	res, err := http.DefaultClient.Do(r.Request)
 	// Inform the HostPool of what happened to the request and allow it to update
 	r.hostResponse.Mark(err)
